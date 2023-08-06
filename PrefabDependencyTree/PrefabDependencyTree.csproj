@@ -15,7 +15,7 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
     <TargetFrameworkProfile />
-    <LangVersion>12</LangVersion>
+    <LangVersion>10</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -46,48 +46,42 @@
     <StartWorkingDirectory>$(VALHEIM_INSTALL)</StartWorkingDirectory>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BepInEx">
+      <HintPath>$(VALHEIM_INSTALL)\BepInEx\core\BepInEx.dll</HintPath>
+    </Reference>
     <Reference Include="0Harmony, Version=2.9.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\HarmonyX.2.9.0\lib\net45\0Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="GraphMLReaderWriter, Version=1.1.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\budul.GraphMLReaderWriter.1.1.3\lib\netstandard2.0\GraphMLReaderWriter.dll</HintPath>
+    <Reference Include="DotNetGraph, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DotNetGraph.3.0.0-beta3\lib\netstandard2.0\DotNetGraph.dll</HintPath>
     </Reference>
     <Reference Include="Jotunn, Version=2.12.4.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\JotunnLib.2.12.4\lib\net462\Jotunn.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.Cecil, Version=0.11.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Mono.Cecil.0.11.4\lib\net40\Mono.Cecil.dll</HintPath>
+    <Reference Include="mscorlib" />
+    <Reference Include="System.Net" />
+    <Reference Include="UnityEngine">
+      <HintPath>$(VALHEIM_INSTALL)\unstripped_corlib\UnityEngine.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.Cecil.Mdb, Version=0.11.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Mono.Cecil.0.11.4\lib\net40\Mono.Cecil.Mdb.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Pdb, Version=0.11.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Mono.Cecil.0.11.4\lib\net40\Mono.Cecil.Pdb.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Rocks, Version=0.11.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Mono.Cecil.0.11.4\lib\net40\Mono.Cecil.Rocks.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod, Version=21.9.19.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MonoMod.21.9.19.1\lib\net40\MonoMod.exe</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.RuntimeDetour, Version=22.1.29.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MonoMod.RuntimeDetour.22.1.29.1\lib\net452\MonoMod.RuntimeDetour.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.Utils, Version=22.1.29.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MonoMod.Utils.22.1.29.1\lib\net452\MonoMod.Utils.dll</HintPath>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(VALHEIM_INSTALL)\unstripped_corlib\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="UniversalTypeConverter, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31a5019a85bc7611, processorArchitecture=MSIL">
-      <HintPath>..\packages\UniversalTypeConverter.2.0.0\lib\net46\UniversalTypeConverter.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConsoleController.cs" />
+    <Compile Include="DataHarvester.cs" />
+    <Compile Include="Graph\GraphBuilder.cs" />
+    <Compile Include="Model\IngredientsRequirement.cs" />
+    <Compile Include="Model\SimpleCraftingStation.cs" />
+    <Compile Include="Model\SimpleItem.cs" />
+    <Compile Include="Model\SimpleRecipe.cs" />
+    <Compile Include="Model\StationRequirement.cs" />
     <Compile Include="Properties\IgnoreAccessModifiers.cs" />
     <Compile Include="PrefabDependencyTreePlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -104,6 +98,7 @@
     <None Include="Package\manifest.json" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ILRepack.targets" />
     <Content Include="Package\icon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -113,6 +108,7 @@
   <PropertyGroup>
     <BuildDependsOn>
       $(BuildDependsOn);
+      ILRepacker;
       JotunnPostBuildTaskWin
     </BuildDependsOn>
   </PropertyGroup>
