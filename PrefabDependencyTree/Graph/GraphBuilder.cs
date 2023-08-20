@@ -1,124 +1,119 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using DotNetGraph.Attributes;
-using DotNetGraph.Compilation;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
 using Jotunn;
+using PrefabDependencyTree.Data;
 using PrefabDependencyTree.Model;
 
 namespace PrefabDependencyTree.Graph;
 
-public class GraphBuilder
+public static class GraphBuilder
 {
-    private readonly DotGraph graph;
-    private readonly Dictionary<string, DotNode> nodes = new();
-    private readonly Dictionary<string, DotEdge> edges = new();
+    public static readonly DotGraph Graph = new DotGraph().WithIdentifier("graph").Directed();
+    private static readonly Dictionary<string, DotNode> Nodes = new();
+    private static readonly Dictionary<string, DotEdge> Edges = new();
 
-    public GraphBuilder(string name)
+    public static DotGraph CreateGraph()
     {
-        graph = new DotGraph().WithIdentifier(name).Directed();
-    }
-
-    public void ItemsToNodes(Dictionary<string, SimpleItem> items)
-    {
-        foreach (KeyValuePair<string, SimpleItem> item in items)
+        // create all drops from everywhere
+        foreach (KeyValuePair<string,List<GraphItem>> drop in DataHarvester.Drops)
         {
-            var newNode = new DotNode()
-                .WithIdentifier(item.Key)
-                .WithLabel(item.Key)
-                .WithShape(DotNodeShape.Box);
-            nodes.Add(item.Key, newNode);
-        }
-    }
-
-    public void StationsToNodes(Dictionary<string, SimpleCraftingStation> stations)
-    {
-        foreach (KeyValuePair<string, SimpleCraftingStation> station in stations)
-        {
-            var newNode = new DotNode()
-                .WithIdentifier(station.Key)
-                .WithLabel(station.Key)
-                .WithShape(DotNodeShape.Diamond);
-            nodes.Add(station.Key, newNode);
-        }
-    }
-
-    private DotNode RecipeNode(SimpleRecipe recipe)
-    {
-        string nodeName = recipe.RecipeName();
-        var recipeNode = new DotNode()
-            .WithIdentifier(nodeName)
-            .WithShape(DotNodeShape.Note);
-        nodes.Add(nodeName, recipeNode);
-        return recipeNode;
-    }
-
-    private void AttachStationToRecipe(SimpleRecipe recipe, DotNode recipeNode)
-    {
-        string stationName = recipe.Station?.stationName;
-        if (stationName == null) return;
-        if (nodes.TryGetValue(stationName, out DotNode stationNode))
-            FromToEdge(stationNode, recipeNode, optionalLabel: $"min lvl {recipe.Station.minStationLevel}");
-        else
-            Logger.LogWarning($"could not find station '{stationName}'");
-    }
-
-    private void IncreaseUsageCounter(DotNode node)
-    {
-        int used = 1;
-        if (node.TryGetAttribute("used", out DotAttribute alreadyUsed)) used += int.Parse(alreadyUsed.Value);
-        node.SetAttribute("used", new DotAttribute(used.ToString()));
-    }
-
-    private void FromToEdge(DotNode from, DotNode to, string optionalLabel = "")
-    {
-        string edgeName = $"{from.Identifier.Value} to {to.Identifier.Value}";
-        var edge = new DotEdge().From(from).To(to).WithLabel(optionalLabel);
-        IncreaseUsageCounter(from);
-        IncreaseUsageCounter(to);
-        edges.Add(edgeName, edge);
-    }
-
-    public void RecipesToEdges(Dictionary<string, SimpleRecipe> recipes)
-    {
-        foreach (KeyValuePair<string, SimpleRecipe> recipe in recipes)
-        {
-            if (nodes.TryGetValue(recipe.Value.Item.ItemName, out DotNode craftedItemNode))
+            var droppedFromNode = GetOrCreateNode(drop.Key);
+            foreach (var droppedItemNode in drop.Value.Select(item => GetOrCreateNode(item.ItemName)))
             {
-                var recipeNode = RecipeNode(recipe.Value);
-                AttachStationToRecipe(recipe.Value, recipeNode);
-                FromToEdge(recipeNode, craftedItemNode);
-
-                foreach (IngredientsRequirement ingredient in recipe.Value.Ingredients)
-                {
-                    if (nodes.TryGetValue(ingredient.Item.ItemName, out DotNode ingredientNode))
-                        FromToEdge(ingredientNode, recipeNode, optionalLabel: $"x {ingredient.ItemAmount}");
-                    else
-                        Logger.LogWarning($"could not find ingredient '{ingredient.Item.ItemName}' for recipe to " +
-                                          $"create item '{recipe.Value.Item.ItemName}");
-                }
+                GetOrCreateEdge(droppedFromNode, droppedItemNode);
             }
-            else Logger.LogWarning($"could not find crafting result '{recipe.Value.Item.ItemName}' item");
         }
+        
+        // create all pieces
+        foreach (KeyValuePair<string,GraphPiece> piece in DataHarvester.Pieces)
+        {
+            var pieceNode = GetOrCreateNode(piece.Value.PieceName);
+            var craftingStation = GetOrCreateNode(piece.Value.RequiredCraftingStation);
+            GetOrCreateEdge(craftingStation, pieceNode);
+            foreach (var requiredItem in piece.Value.BuildRequirements
+                         .Select(requirement => GetOrCreateNode(requirement.Key.ItemName)))
+            {
+                GetOrCreateEdge(requiredItem, pieceNode);
+            }
+        }
+        
+        // first we add all free recipes
+        foreach (KeyValuePair<string,GraphRecipe> recipe in DataHarvester.UnboundRecipes)
+        {
+            recipe.Value.AddToGraph(Graph);
+        }
+        
+        // process all found stations and smelters to graph objects
+        foreach (KeyValuePair<string,GraphCraftingStation> station in DataHarvester.CraftingStations)
+        {
+            station.Value.CreateStationGraph();
+        }
+        foreach (KeyValuePair<string,GraphProcessor> smelter in DataHarvester.Processors)
+        {
+            smelter.Value.CreateProcessorGraph();
+        }
+        
+        // build the graph with all stations and smelters
+        foreach (KeyValuePair<string,DotNode> node in Nodes)
+        {
+            Graph.Add(node.Value);
+        }
+        foreach (KeyValuePair<string,DotEdge> edge in Edges)
+        {
+            Graph.Add(edge.Value);
+        }
+        
+        return Graph;
     }
 
-    public async Task<string> Compile()
+    public static DotNode GetOrCreateNode(string name)
     {
-        foreach (KeyValuePair<string, DotNode> node in nodes)
+        DotNode node;
+        if (Nodes.TryGetValue(name, out DotNode existingStationGraph))
         {
-            if (node.Value.TryGetAttribute("used", out DotAttribute used) && int.Parse(used.Value) > 0)
-                graph.Add(node.Value);
+            node = existingStationGraph;
+        }
+        else
+        {
+            node = new DotNode().WithIdentifier(name).WithLabel(name);
+            Nodes.Add(name, node);
         }
 
-        foreach (KeyValuePair<string,DotEdge> edge in edges)
+        return node;
+    }
+
+    public static DotEdge GetOrCreateEdge(string from, string to)
+    {
+        string edgeName = EdgeName(from, to);
+        Logger.LogDebug($"EDGE: {edgeName}");
+        if (Edges.TryGetValue(edgeName, out DotEdge existingEdge))
         {
-            graph.Add(edge.Value);
+            Logger.LogInfo($"skipping to recreate edge '{edgeName}'");
+            return existingEdge;
         }
 
-        var writer = new StringWriter();
-        await graph.CompileAsync(new CompilationContext(writer, new CompilationOptions()));
-        return writer.GetStringBuilder().ToString();
+        if (!Nodes.TryGetValue(from, out DotNode fromNode) || !Nodes.TryGetValue(to, out DotNode toNode))
+            throw new Exception($"nodes for creating edge not found: from '{from}' to '{to}'");
+        return GetOrCreateEdge(fromNode, toNode);
+    }
+
+    public static DotEdge GetOrCreateEdge(DotNode fromNode, DotNode toNode)
+    {
+        var newEdge = new DotEdge().From(fromNode).To(toNode);
+        Edges.Add(EdgeName(fromNode, toNode), newEdge);
+        return newEdge;
+    }
+
+    private static string EdgeName(string from, string to)
+    {
+        return $"{from}->-->-{to}";
+    }
+
+    private static string EdgeName(DotNode from, DotNode to)
+    {
+        return EdgeName(from.Identifier.Value, to.Identifier.Value);
     }
 }

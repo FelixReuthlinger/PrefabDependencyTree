@@ -1,6 +1,7 @@
 using BepInEx;
 using Jotunn;
 using Jotunn.Managers;
+using PrefabDependencyTree.Data;
 
 namespace PrefabDependencyTree
 {
@@ -12,7 +13,6 @@ namespace PrefabDependencyTree
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginName = "PrefabDependencyTree";
         public const string PluginVersion = "1.0.0";
-        
 
         private void Awake()
         {

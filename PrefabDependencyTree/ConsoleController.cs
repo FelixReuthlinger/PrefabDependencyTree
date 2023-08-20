@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using BepInEx;
+using DotNetGraph.Compilation;
 using Jotunn;
 using Jotunn.Entities;
 using PrefabDependencyTree.Graph;
@@ -20,13 +21,13 @@ public class ConsoleController : ConsoleCommand
             switch (args[0])
             {
                 case printOption:
-                    var graphBuilder = new GraphBuilder($"graph");
-                    graphBuilder.ItemsToNodes(DataHarvester.Items);
-                    graphBuilder.StationsToNodes(DataHarvester.CraftingStations);
-                    graphBuilder.RecipesToEdges(DataHarvester.Recipes);
-                    var result = await graphBuilder.Compile();
-                    File.WriteAllText(
-                        Path.Combine(Paths.ConfigPath, $"{PrefabDependencyTreePlugin.PluginGUID}.graph.dot"), result);
+                    var writer = new StringWriter();
+                    var context = new CompilationContext(writer, new CompilationOptions());
+                    var graph = GraphBuilder.CreateGraph();
+                    await graph.CompileAsync(context);
+                    string outputFilePath = Path.Combine(Paths.ConfigPath,
+                        $"{PrefabDependencyTreePlugin.PluginGUID}.graph.dot");
+                    File.WriteAllText(outputFilePath, writer.GetStringBuilder().ToString());
                     break;
                 default:
                     Logger.LogWarning($"this option '{args[0]}' is not supported, see usage");
