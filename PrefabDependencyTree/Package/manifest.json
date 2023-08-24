@@ -1,9 +1,10 @@
 ﻿{
-  "name": "JotunnModStub",
-  "description": "",
-  "version_number": "0.0.1",
-  "website_url": "",
+  "name": "PrefabDependencyTree",
+  "description": "Mod for Modders that have too many recipes and items flowing around - generated .dot graph file that can be used with yED",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/FelixReuthlinger/PrefabDependencyTree",
   "dependencies": [
-    "ValheimModding-Jotunn-2.7.9",
+    "ValheimModding-Jotunn-2.12.6",
+    "denikson-BepInExPack_Valheim-5.4.2105"
   ]
 }

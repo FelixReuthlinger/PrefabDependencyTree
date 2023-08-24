@@ -118,8 +118,9 @@
     <None Include="Package\manifest.json" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="CHANGELOG.md" />
     <Content Include="ILRepack.targets" />
-    <Content Include="Package\icon.png" />
+    <Content Include="Package\img.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="JotunnPostBuildTaskWin" Condition="'$(OS)' == 'Windows_NT'">
