@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Jotunn;
 using Jotunn.Managers;
+using PrefabDependencyTree.Data.Drops;
 using PrefabDependencyTree.Model;
+using PrefabDependencyTree.Util;
 
 namespace PrefabDependencyTree.Data;
 
@@ -26,6 +27,56 @@ public static class DataHarvester
         InitializeFermenters();
         InitializeCraftingStations();
         InitializeRecipes();
+        // show results
+        LogOverview();
+        LogItemTypesOverview();
+    }
+
+    private static void LogOverview()
+    {
+        Logger.LogInfo("vvvv data harvester overview vvvv");
+        Logger.LogInfo($"    total {Items.Count} items registered");
+        Logger.LogInfo($"    total {Drops.Count} drops registered");
+        Logger.LogInfo($"    total {Pieces.Count} pieces registered");
+        Logger.LogInfo($"    total {CraftingStations.Count} crafting stations registered");
+        Logger.LogInfo($"    total {Processors.Count} processor stations (fermenter, smelter, ...) registered");
+        Logger.LogInfo($"    total {UnboundRecipes.Count} unbound recipes registered");
+        Logger.LogInfo("^^^^ data harvester overview ^^^^");
+    }
+
+    private static void LogItemTypesOverview()
+    {
+        Dictionary<string, int> itemTypeCounts = Items
+            .GroupBy(item => item.Value.ItemType)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Count()
+            );
+
+        Logger.LogInfo("vvvv item types overview vvvv");
+        foreach (KeyValuePair<string, int> pair in itemTypeCounts.OrderBy(pair => pair.Key))
+        {
+            Logger.LogInfo($"item type '{pair.Key}' -> found {pair.Value} items");
+        }
+
+        Logger.LogInfo("^^^^ item types overview ^^^^");
+    }
+
+    public static List<string> LogAllToString()
+    {
+        List<string> output = new List<string> { "==== debug log output for all prefabs ====" };
+        output.AddRange(Items.Select(item => item.Value.ToString()));
+        output.AddRange(
+            from drop in Drops
+            let dropsList = string.Join("\n    ", drop.Value.Select(item => item.ToString()))
+            select $"['{drop.Key}' drops:\n" + $"    {dropsList}\n" + $"]"
+        );
+        output.AddRange(Pieces.Select(piece => piece.Value.ToString()));
+        output.AddRange(CraftingStations.Select(station => station.Value.ToString()));
+        output.AddRange(Processors.Select(processor => processor.Value.ToString()));
+        output.AddRange(UnboundRecipes.Select(recipe => recipe.Value.ToString()));
+        output.Add("==== debug log output for all prefabs ====");
+        return output;
     }
 
     private static void InitializePieces()
@@ -116,205 +167,59 @@ public static class DataHarvester
     {
         Dictionary<string, Recipe> recipes = PrefabManager.Cache.GetPrefabs(typeof(Recipe))
             .ToDictionary(kv => kv.Key, kv => (Recipe)kv.Value);
-        Logger.LogInfo($"loaded {recipes.Count} recipes from game");
 
-        var stationRecipes = recipes
-            .Where(recipe =>
-                recipe.Value.m_item != null && recipe.Value.m_craftingStation != null)
-            .ToList();
-        var unboundRecipes = recipes
-            .Where(recipe =>
-                recipe.Value.m_item != null && recipe.Value.m_craftingStation == null)
-            .ToList();
-
-        Logger.LogInfo(
-            $"{stationRecipes.Count} recipes are bound to crafting stations, {unboundRecipes.Count} are not");
-        foreach (KeyValuePair<string, Recipe> recipe in stationRecipes)
+        foreach (KeyValuePair<string, Recipe> pair in recipes)
         {
-            if (CraftingStations.TryGetValue(recipe.Value.m_craftingStation.name, out GraphCraftingStation station))
-                station.Recipes.Add(recipe.Key, GraphRecipe.FromRecipe(recipe.Value));
-            else Logger.LogWarning($"station '{recipe.Value.m_craftingStation.name}' not found");
+            if (pair.Value.m_item == null)
+            {
+                Logger.LogInfo($"recipe '{pair.Key}' does not create an item - skipping");
+                continue;
+            }
+
+            if (pair.Value.m_craftingStation != null)
+            {
+                if (CraftingStations.TryGetValue(pair.Value.m_craftingStation.name, out GraphCraftingStation station))
+                    station.Recipes.Add(pair.Key, GraphRecipe.FromRecipe(pair.Value));
+                else
+                    Logger.LogWarning($"recipe '{pair.Key}': " +
+                                      $"station '{pair.Value.m_craftingStation.name}' not found");
+            }
+            else UnboundRecipes.Add(pair.Key, GraphRecipe.FromRecipe(pair.Value));
         }
 
-        foreach (KeyValuePair<string, Recipe> unboundRecipe in unboundRecipes)
-        {
-            UnboundRecipes.Add(unboundRecipe.Key, GraphRecipe.FromRecipe(unboundRecipe.Value));
-        }
-    }
-
-    private static List<Tuple<string, string>> InitializeDropFromContainer()
-    {
-        List<Tuple<string, string>> containerDrops = PrefabManager.Cache.GetPrefabs(typeof(Container))
-            .ToDictionary(kv => kv.Key, kv => (Container)kv.Value)
-            .Where(container =>
-                container.Value.m_defaultItems is { m_drops: not null }
-            ).SelectMany(gameObject => gameObject.Value.m_defaultItems.m_drops
-                .Select(drop => Tuple.Create(gameObject.Key, drop.m_item.name))
-            ).ToList();
-        Logger.LogInfo($"loaded {containerDrops.Count} drops from containers from game");
-        return containerDrops;
-    }
-
-    private static List<Tuple<string, string>> InitializeDropFromDestructibles()
-    {
-        List<Tuple<string, string>> dropsOnDestroyed = PrefabManager.Cache.GetPrefabs(typeof(DropOnDestroyed))
-            .ToDictionary(kv => kv.Key, kv => (DropOnDestroyed)kv.Value)
-            .Where(container =>
-                container.Value.m_dropWhenDestroyed is { m_drops: not null }
-            ).SelectMany(gameObject => gameObject.Value.m_dropWhenDestroyed.m_drops
-                .Select(drop => Tuple.Create(gameObject.Key, drop.m_item.name))
-            ).ToList();
-        Logger.LogInfo($"loaded {dropsOnDestroyed.Count} drops from destroyable objects from game");
-        return dropsOnDestroyed;
-    }
-
-    private static List<Tuple<string, string>> InitializeDropFromLootSpawners()
-    {
-        List<Tuple<string, string>> lootSpawnerDrops = PrefabManager.Cache.GetPrefabs(typeof(LootSpawner))
-            .ToDictionary(kv => kv.Key, kv => (LootSpawner)kv.Value)
-            .Where(container =>
-                container.Value.m_items is { m_drops: not null }
-            ).SelectMany(gameObject => gameObject.Value.m_items.m_drops
-                .Select(drop => Tuple.Create(gameObject.Key, drop.m_item.name))
-            ).ToList();
-        Logger.LogInfo($"loaded {lootSpawnerDrops.Count} drops from loot spawners from game");
-        return lootSpawnerDrops;
-    }
-
-    private static List<Tuple<string, string>> InitializeDropFromMineRock()
-    {
-        List<Tuple<string, string>> mineRockDrops = PrefabManager.Cache.GetPrefabs(typeof(MineRock))
-            .ToDictionary(kv => kv.Key, kv => (MineRock)kv.Value)
-            .Where(container =>
-                container.Value.m_dropItems is { m_drops: not null }
-            ).SelectMany(gameObject => gameObject.Value.m_dropItems.m_drops
-                .Select(drop => Tuple.Create(gameObject.Key, drop.m_item.name))
-            ).ToList();
-        Logger.LogInfo($"loaded {mineRockDrops.Count} drops from mine rocks from game");
-        return mineRockDrops;
-    }
-
-    private static List<Tuple<string, string>> InitializeDropFromMineRock5()
-    {
-        List<Tuple<string, string>> mineRock5Drops = PrefabManager.Cache.GetPrefabs(typeof(MineRock5))
-            .ToDictionary(kv => kv.Key, kv => (MineRock5)kv.Value)
-            .Where(container =>
-                container.Value.m_dropItems is { m_drops: not null }
-            ).SelectMany(gameObject => gameObject.Value.m_dropItems.m_drops
-                .Select(drop => Tuple.Create(gameObject.Key, drop.m_item.name))
-            ).ToList();
-        Logger.LogInfo($"loaded {mineRock5Drops.Count} drops from other mine rocks from game");
-        return mineRock5Drops;
-    }
-
-    private static List<Tuple<string, string>> InitializeDropFromPickables()
-    {
-        var pickables = PrefabManager.Cache.GetPrefabs(typeof(Pickable))
-            .ToDictionary(kv => kv.Key, kv => (Pickable)kv.Value);
-        List<Tuple<string, string>> pickableDrops = pickables
-            .Where(gameObject => gameObject.Value.m_itemPrefab != null)
-            .Select(gameObject =>
-                Tuple.Create(gameObject.Key, gameObject.Value.m_itemPrefab.name))
-            .ToList();
-        List<Tuple<string, string>> pickableExtraDrops = pickables
-            .Where(container =>
-                container.Value.m_extraDrops is { m_drops: not null }
-            )
-            .SelectMany(gameObject => gameObject.Value.m_extraDrops.m_drops
-                .Select(drop => Tuple.Create(gameObject.Key, drop.m_item.name)))
-            .ToList();
-        var pickableAllDrops = pickableDrops.Union(pickableExtraDrops).ToList();
-        Logger.LogInfo($"loaded {pickableAllDrops.Count} drops from pickables " +
-            $"(including {pickableExtraDrops.Count} extra drops) from game");
-        return pickableAllDrops;
-    }
-
-    private static List<Tuple<string, string>> InitializeDropFromPickableItems()
-    {
-        var pickableItems = PrefabManager.Cache.GetPrefabs(typeof(PickableItem))
-            .ToDictionary(kv => kv.Key, kv => (PickableItem)kv.Value);
-        List<Tuple<string, string>> pickableItemDrops = pickableItems
-            .Where(gameObject => gameObject.Value.m_itemPrefab != null)
-            .Select(gameObject =>
-                Tuple.Create(gameObject.Key, gameObject.Value.m_itemPrefab.name))
-            .ToList();
-        List<Tuple<string, string>> pickableItemRandomDrops = pickableItems
-            .Where(gameObject => gameObject.Value.m_randomItemPrefabs != null)
-            .SelectMany(gameObject =>
-                gameObject.Value.m_randomItemPrefabs
-                    .ToList()
-                    .Select(randomItem =>
-                        Tuple.Create(gameObject.Key, randomItem.m_itemPrefab.name))
-            ).ToList();
-        var allPickableItemDrops = pickableItemDrops.Union(pickableItemRandomDrops).ToList();
-        Logger.LogInfo($"loaded {allPickableItemDrops.Count} drops from pickable items (including " +
-                       $"{pickableItemRandomDrops.Count} random drops) from game");
-        return allPickableItemDrops;
-    }
-
-    private static List<Tuple<string, string>> InitializeDropFromTreeBase()
-    {
-        List<Tuple<string, string>> treeBaseDrops = PrefabManager.Cache.GetPrefabs(typeof(TreeBase))
-            .ToDictionary(kv => kv.Key, kv => (TreeBase)kv.Value)
-            .Where(container =>
-                container.Value.m_dropWhenDestroyed is { m_drops: not null }
-            ).SelectMany(gameObject => gameObject.Value.m_dropWhenDestroyed.m_drops
-                .Select(drop => Tuple.Create(gameObject.Key, drop.m_item.name))
-            ).ToList();
-        Logger.LogInfo($"loaded {treeBaseDrops.Count} drops from tree bases from game");
-        return treeBaseDrops;
-    }
-
-    private static List<Tuple<string, string>> InitializeDropFromTreeLog()
-    {
-        List<Tuple<string, string>> treeLogDrops = PrefabManager.Cache.GetPrefabs(typeof(TreeLog))
-            .ToDictionary(kv => kv.Key, kv => (TreeLog)kv.Value)
-            .Where(container =>
-                container.Value.m_dropWhenDestroyed is { m_drops: not null }
-            ).SelectMany(gameObject => gameObject.Value.m_dropWhenDestroyed.m_drops
-                .Select(drop => Tuple.Create(gameObject.Key, drop.m_item.name))
-            ).ToList();
-        Logger.LogInfo($"loaded {treeLogDrops.Count} drops from tree logs from game");
-        return treeLogDrops;
-    }
-
-    private static List<Tuple<string, string>> InitializeDropFromCharacters()
-    {
-        List<Tuple<string, string>> characterDrops = PrefabManager.Cache.GetPrefabs(typeof(Character))
-            .Select(kv => (Character)kv.Value)
-            .ToDictionary(
-                character => character.name,
-                character => (CharacterDrop)character.GetComponent(typeof(CharacterDrop))
-            )
-            .Where(tuple => tuple.Value != null && tuple.Value.m_drops != null)
-            .SelectMany(character => character.Value
-                .m_drops.Select(drop => Tuple.Create(character.Key, drop.m_prefab.name))).ToList();
-        Logger.LogInfo($"loaded {characterDrops.Count} drops from characters from game");
-        return characterDrops;
+        int craftingStationRecipes = CraftingStations
+            .Select(station => station.Value.Recipes.Count).Sum();
+        Logger.LogInfo($"loaded {craftingStationRecipes} recipes bound to crafting stations from game");
+        Logger.LogInfo($"loaded {UnboundRecipes.Count} recipes from game that are not bound to a crafting station");
     }
 
     private static void InitializeDrops()
     {
-        var mergedDrops = new List<List<Tuple<string, string>>>
+        new List<Initializer>
+        {
+            new ContainerDropsInitializer(),
+            new DestructibleDropsInitializer(),
+            new TreeLogDropsInitializer(),
+            new TreeBaseDropsInitializer(),
+            new CharacterDropInitializer(),
+            new MineRockDropsInitializer(),
+            new MineRock5DropInitializer(),
+            new LootSpawnerDropsInitializer(),
+            new PickableDropInitializer(),
+            new PickableExtraDropInitializer(),
+            new PickableItemDropInitializer(),
+            new PickableItemRandomDropInitializer()
+        }.ForEach(initializer =>
+        {
+            try
             {
-                InitializeDropFromTreeBase(),
-                InitializeDropFromTreeLog(),
-                InitializeDropFromPickables(),
-                InitializeDropFromPickableItems(),
-                InitializeDropFromDestructibles(),
-                InitializeDropFromContainer(),
-                InitializeDropFromLootSpawners(),
-                InitializeDropFromMineRock(),
-                InitializeDropFromMineRock5(),
-                InitializeDropFromCharacters()
-            }.SelectMany(lists => lists)
-            .GroupBy(list => list.Item1)
-            .ToDictionary(
-                group => group.Key,
-                group => group.Select(drop =>
-                    GraphItem.GetOrCreate(drop.Item2)).Distinct().ToList()
-            ).ToList();
-        Logger.LogInfo($"merged to {mergedDrops.Count} unique drops");
-        mergedDrops.ForEach(drop => Drops.Add(drop.Key, drop.Value));
+                initializer.InitializeDrops();
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"got exception on initializing: {e.Message}");
+                Logger.LogError(e.StackTrace);
+            }
+        });
     }
 }

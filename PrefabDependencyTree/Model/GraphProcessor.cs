@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
-using DotNetGraph.Core;
-using PrefabDependencyTree.Graph;
+using System.Security.Permissions;
 
 namespace PrefabDependencyTree.Model;
 
@@ -14,7 +13,7 @@ public class GraphProcessor : BaseCrafting
     {
         return new GraphProcessor(smelter.name, GraphRecipe.FromSmelter(smelter));
     }
-    
+
     public static GraphProcessor FromIncinerator(Incinerator incinerator)
     {
         return new GraphProcessor(incinerator.name, GraphRecipe.FromIncinerator(incinerator));
@@ -30,13 +29,9 @@ public class GraphProcessor : BaseCrafting
         return new GraphProcessor(cookingStation.name, GraphRecipe.FromCookingStation(cookingStation));
     }
 
-    public void CreateProcessorGraph()
+    public override string ToString()
     {
-        DotNode processorNode = GraphBuilder.GetOrCreateNode(Name);
-        foreach (KeyValuePair<string,GraphRecipe> recipe in Recipes)
-        {
-            var recipeNode = recipe.Value.AddToGraph(GraphBuilder.Graph);
-            GraphBuilder.GetOrCreateEdge(processorNode, recipeNode);
-        }
+        return $"[processor {base.ToString()}\n" +
+               $"]";
     }
 }

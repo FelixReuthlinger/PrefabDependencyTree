@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using DotNetGraph.Core;
-using PrefabDependencyTree.Graph;
 
 namespace PrefabDependencyTree.Model;
 
 public class GraphCraftingStation : BaseCrafting
 {
-    private readonly List<string> ExtensionNames;
+    public readonly List<string> ExtensionNames;
 
     private GraphCraftingStation(string stationName, List<string> extensionNames) : base(stationName)
     {
@@ -38,20 +36,14 @@ public class GraphCraftingStation : BaseCrafting
             });
     }
 
-    public void CreateStationGraph()
+    public override string ToString()
     {
-        DotNode stationNode = GraphBuilder.GetOrCreateNode(Name);
-
-        foreach (string extensionName in ExtensionNames)
-        {
-            var extensionNode = GraphBuilder.GetOrCreateNode(extensionName);
-            GraphBuilder.GetOrCreateEdge(extensionNode, stationNode);
-        }
-
-        foreach (KeyValuePair<string, GraphRecipe> recipe in Recipes)
-        {
-            DotNode recipeNode = recipe.Value.AddToGraph(GraphBuilder.Graph);
-            GraphBuilder.GetOrCreateEdge(stationNode, recipeNode);
-        }
+        if (ExtensionNames.Count <= 0)
+            return $"[crafting station {base.ToString()}" +
+                   $"\n]";
+        string extensions = string.Join(", ", ExtensionNames);
+        return $"[crafting station {base.ToString()}\n" +
+               $"  has extensions: {extensions}\n" +
+               $"]";
     }
 }

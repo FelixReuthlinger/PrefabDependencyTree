@@ -2,6 +2,7 @@ using BepInEx;
 using Jotunn;
 using Jotunn.Managers;
 using PrefabDependencyTree.Data;
+using PrefabDependencyTree.Util;
 
 namespace PrefabDependencyTree
 {

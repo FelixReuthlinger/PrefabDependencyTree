@@ -93,9 +93,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConsoleController.cs" />
     <Compile Include="Data\DataHarvester.cs" />
-    <Compile Include="Graph\GraphBuilder.cs" />
+    <Compile Include="Data\Drops\CharacterDropInitializer.cs" />
+    <Compile Include="Data\Drops\ContainerDropsInitializer.cs" />
+    <Compile Include="Data\Drops\DestructibleDropsInitializer.cs" />
+    <Compile Include="Data\Drops\DropsInitializerDropData.cs" />
+    <Compile Include="Data\Drops\DropsInitializer.cs" />
+    <Compile Include="Data\Drops\LootSpawnerDropsInitializer.cs" />
+    <Compile Include="Data\Drops\MineRock5DropInitializer.cs" />
+    <Compile Include="Data\Drops\MineRockDropsInitializer.cs" />
+    <Compile Include="Data\Drops\PickableDropInitializer.cs" />
+    <Compile Include="Data\Drops\PickableExtraDropInitializer.cs" />
+    <Compile Include="Data\Drops\PickableItemDropInitializer.cs" />
+    <Compile Include="Data\Drops\PickableItemRandomDropInitializer.cs" />
+    <Compile Include="Data\Drops\TreeBaseDropsInitializer.cs" />
+    <Compile Include="Data\Drops\TreeLogDropsInitializer.cs" />
+    <Compile Include="Data\ExcludeFilterTypes.cs" />
+    <Compile Include="Data\FilteredData.cs" />
+    <Compile Include="Data\GraphBuilder.cs" />
+    <Compile Include="Data\IncludeFilterTypes.cs" />
     <Compile Include="Model\BaseCrafting.cs" />
     <Compile Include="Model\GraphCraftingStation.cs" />
     <Compile Include="Model\GraphItem.cs" />
@@ -105,6 +121,8 @@
     <Compile Include="Properties\IgnoreAccessModifiers.cs" />
     <Compile Include="PrefabDependencyTreePlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Util\ConsoleController.cs" />
+    <Compile Include="Util\Logger.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
