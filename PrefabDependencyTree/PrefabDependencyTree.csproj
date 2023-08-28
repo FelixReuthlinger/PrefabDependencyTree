@@ -97,8 +97,10 @@
     <Compile Include="Data\Drops\CharacterDropInitializer.cs" />
     <Compile Include="Data\Drops\ContainerDropsInitializer.cs" />
     <Compile Include="Data\Drops\DestructibleDropsInitializer.cs" />
-    <Compile Include="Data\Drops\DropsInitializerDropData.cs" />
-    <Compile Include="Data\Drops\DropsInitializer.cs" />
+    <Compile Include="Data\Drops\Generic\DropsInitializer.cs" />
+    <Compile Include="Data\Drops\Generic\DropsInitializerDropData.cs" />
+    <Compile Include="Data\Drops\Generic\DropType.cs" />
+    <Compile Include="Data\Drops\Generic\Initializer.cs" />
     <Compile Include="Data\Drops\LootSpawnerDropsInitializer.cs" />
     <Compile Include="Data\Drops\MineRock5DropInitializer.cs" />
     <Compile Include="Data\Drops\MineRockDropsInitializer.cs" />

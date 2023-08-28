@@ -2,7 +2,7 @@
 using UnityEngine;
 using Logger = PrefabDependencyTree.Util.Logger;
 
-namespace PrefabDependencyTree.Data.Drops;
+namespace PrefabDependencyTree.Data.Drops.Generic;
 
 public abstract class DropsInitializerDropData<T> : DropsInitializer<T, DropTable.DropData>
 {

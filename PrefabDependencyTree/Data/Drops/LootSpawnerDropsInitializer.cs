@@ -1,16 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Jotunn.Managers;
+using PrefabDependencyTree.Data.Drops.Generic;
 using PrefabDependencyTree.Util;
 
 namespace PrefabDependencyTree.Data.Drops;
 
 public class LootSpawnerDropsInitializer : DropsInitializerDropData<LootSpawner>
 {
-    protected override Dictionary<string, LootSpawner> GetGameObjects()
+    protected override Dictionary<Tuple<string, DropType>, LootSpawner> GetGameObjects()
     {
-        return PrefabManager.Cache.GetPrefabs(typeof(LootSpawner))
-            .ToDictionary(kv => kv.Key, kv => (LootSpawner)kv.Value);
+        return PrefabManager.Cache.GetPrefabs(typeof(LootSpawner)).ToDictionary(
+            kv => Tuple.Create(kv.Key, DropType.LootSpawner),
+            kv => (LootSpawner)kv.Value
+        );
     }
 
     protected override List<DropTable.DropData> GetDropList(LootSpawner input)

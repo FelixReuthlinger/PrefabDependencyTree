@@ -1,19 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using PrefabDependencyTree.Model;
 using UnityEngine;
 using Logger = PrefabDependencyTree.Util.Logger;
 
-namespace PrefabDependencyTree.Data.Drops;
-
-public interface Initializer
-{
-    public void InitializeDrops();
-}
+namespace PrefabDependencyTree.Data.Drops.Generic;
 
 public abstract class DropsInitializer<T, U> : Initializer
 {
-    protected abstract Dictionary<string, T> GetGameObjects();
+    protected abstract Dictionary<Tuple<string, DropType>, T> GetGameObjects();
 
     protected abstract List<U> GetDropList(T input);
 
@@ -22,7 +18,7 @@ public abstract class DropsInitializer<T, U> : Initializer
     public void InitializeDrops()
     {
         int countBefore = DataHarvester.Drops.Count;
-        foreach (KeyValuePair<string, T> pair in GetGameObjects())
+        foreach (KeyValuePair<Tuple<string, DropType>, T> pair in GetGameObjects())
         {
             List<U> dropData = GetDropList(pair.Value).Where(drop => drop != null).ToList();
             if (dropData.Count <= 0)
@@ -31,7 +27,7 @@ public abstract class DropsInitializer<T, U> : Initializer
                 continue;
             }
 
-            List<GraphItem> newDrops = DataHarvester.Drops.TryGetValue(pair.Key, out List<GraphItem> drops)
+            List<GraphItem> newDrops = DataHarvester.Drops.TryGetValue(pair.Key.Item1, out List<GraphItem> drops)
                 ? drops
                 : new List<GraphItem>();
             foreach (U drop in dropData)
@@ -55,7 +51,7 @@ public abstract class DropsInitializer<T, U> : Initializer
                 }
             }
 
-            DataHarvester.Drops[pair.Key] = newDrops.Distinct().ToList();
+            DataHarvester.Drops[pair.Key.Item1] = newDrops.Distinct().ToList();
         }
 
         Logger.LogInfo(

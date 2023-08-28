@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
+using PrefabDependencyTree.Data.Drops.Generic;
 using PrefabDependencyTree.Util;
 
 namespace PrefabDependencyTree.Data;
@@ -10,8 +11,6 @@ namespace PrefabDependencyTree.Data;
 public class GraphBuilder
 {
     private readonly DotGraph Graph = new DotGraph().WithIdentifier("graph").Directed();
-
-    public const string NodeTypeCreature = "Creature";
 
     private readonly Dictionary<string, DotNode> Nodes = new();
     private readonly Dictionary<string, DotEdge> Edges = new();
@@ -31,25 +30,46 @@ public class GraphBuilder
         if (nodeType != null)
         {
             if (Enum.TryParse(nodeType, out ItemDrop.ItemData.ItemType itemType))
-                SetNodeColor(newNode, itemType);
-            else
-            {
-                switch (nodeType)
-                {
-                    case NodeTypeCreature:
-                        newNode.WithColor(DotColor.Orange);
-                        break;
-                    default:
-                        Logger.LogWarning($"node type '{nodeType}' not supported");                 
-                        break;
-                } 
-            }
+                SetNodeColorItemType(newNode, itemType);
+            else if (Enum.TryParse(nodeType, out DropType dropType))
+                SetNodeColorDropType(newNode, dropType);
         }
 
         Nodes.Add(name, newNode);
     }
 
-    private void SetNodeColor(DotNode node, ItemDrop.ItemData.ItemType itemType)
+    private static void SetNodeColorDropType(DotNode node, DropType dropType)
+    {
+        switch (dropType)
+        {
+            case DropType.Character:
+                node.WithColor(DotColor.Orange);
+                break;
+            case DropType.Container:
+            case DropType.LootSpawner:
+                node.WithColor(DotColor.Beige);
+                break;
+            case DropType.Destructible:
+                node.WithColor(DotColor.Crimson);
+                break;
+            case DropType.Pickable:
+                node.WithColor(DotColor.Ivory);
+                break;
+            case DropType.Tree:
+                node.WithColor(DotColor.Brown);
+                node.WithFontColor(DotColor.White);
+                break;
+            case DropType.MineRock:
+                node.WithColor(DotColor.Black);
+                node.WithFontColor(DotColor.White);
+                break;
+            default:
+                Logger.LogWarning($"node type '{dropType.ToString()}' not supported");
+                break;
+        }
+    }
+
+    private static void SetNodeColorItemType(DotNode node, ItemDrop.ItemData.ItemType itemType)
     {
         switch (itemType)
         {

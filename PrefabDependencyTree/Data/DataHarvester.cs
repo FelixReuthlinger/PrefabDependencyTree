@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Jotunn.Managers;
 using PrefabDependencyTree.Data.Drops;
+using PrefabDependencyTree.Data.Drops.Generic;
 using PrefabDependencyTree.Model;
 using PrefabDependencyTree.Util;
 
