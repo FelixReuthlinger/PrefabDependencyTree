@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
-using PrefabDependencyTree.Data.Drops.Generic;
+using PrefabDependencyTree.Model;
 using PrefabDependencyTree.Util;
 
 namespace PrefabDependencyTree.Data;
@@ -15,7 +15,12 @@ public class GraphBuilder
     private readonly Dictionary<string, DotNode> Nodes = new();
     private readonly Dictionary<string, DotEdge> Edges = new();
 
-    public void AddNode(string name, string nodeType = null)
+    public void AddNode(GraphItem item)
+    {
+        AddNode(item.ItemName, item.ItemType);
+    }
+    
+    public void AddNode(string name, string nodeType)
     {
         if (string.IsNullOrEmpty(name))
         {
@@ -57,11 +62,10 @@ public class GraphBuilder
                 break;
             case DropType.Tree:
                 node.WithColor(DotColor.Brown);
-                node.WithFontColor(DotColor.White);
                 break;
             case DropType.MineRock:
-                node.WithColor(DotColor.Black);
-                node.WithFontColor(DotColor.White);
+                node.WithShape(DotNodeShape.Diamond);
+                node.WithColor(DotColor.SlateGrey);
                 break;
             default:
                 Logger.LogWarning($"node type '{dropType.ToString()}' not supported");

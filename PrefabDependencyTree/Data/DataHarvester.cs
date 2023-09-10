@@ -15,7 +15,7 @@ public static class DataHarvester
     public static readonly Dictionary<string, GraphRecipe> UnboundRecipes = new();
     public static readonly Dictionary<string, GraphCraftingStation> CraftingStations = new();
     public static readonly Dictionary<string, GraphProcessor> Processors = new();
-    public static readonly Dictionary<string, List<GraphItem>> Drops = new();
+    public static readonly Dictionary<Tuple<string, DropType>, List<GraphItem>> Drops = new();
     public static readonly Dictionary<string, GraphPiece> Pieces = new();
 
     public static void Initialize()

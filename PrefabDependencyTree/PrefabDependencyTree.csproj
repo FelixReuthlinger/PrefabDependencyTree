@@ -99,7 +99,6 @@
     <Compile Include="Data\Drops\DestructibleDropsInitializer.cs" />
     <Compile Include="Data\Drops\Generic\DropsInitializer.cs" />
     <Compile Include="Data\Drops\Generic\DropsInitializerDropData.cs" />
-    <Compile Include="Data\Drops\Generic\DropType.cs" />
     <Compile Include="Data\Drops\Generic\Initializer.cs" />
     <Compile Include="Data\Drops\LootSpawnerDropsInitializer.cs" />
     <Compile Include="Data\Drops\MineRock5DropInitializer.cs" />
@@ -114,6 +113,7 @@
     <Compile Include="Data\FilteredData.cs" />
     <Compile Include="Data\GraphBuilder.cs" />
     <Compile Include="Data\IncludeFilterTypes.cs" />
+    <Compile Include="Data\TypeEnums.cs" />
     <Compile Include="Model\BaseCrafting.cs" />
     <Compile Include="Model\GraphCraftingStation.cs" />
     <Compile Include="Model\GraphItem.cs" />

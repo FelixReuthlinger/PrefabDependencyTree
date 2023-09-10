@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using DotNetGraph.Core;
 using PrefabDependencyTree.Model;
@@ -6,19 +7,13 @@ using PrefabDependencyTree.Util;
 
 namespace PrefabDependencyTree.Data;
 
-public enum FilterType
-{
-    Include,
-    Exclude
-}
-
 public abstract class FilteredData
 {
     protected Dictionary<string, GraphItem> Items;
     protected Dictionary<string, GraphRecipe> UnboundRecipes;
     protected Dictionary<string, GraphCraftingStation> CraftingStations;
     protected Dictionary<string, GraphProcessor> Processors;
-    protected Dictionary<string, List<GraphItem>> Drops;
+    protected Dictionary<Tuple<string, DropType>, List<GraphItem>> Drops;
     protected Dictionary<string, GraphPiece> Pieces;
 
     protected List<string> ItemTypeFilters;
@@ -43,24 +38,24 @@ public abstract class FilteredData
 
         Items.ToList().ForEach(item => graphBuilder.AddNode(item.Value.ItemName, item.Value.ItemType));
 
-        foreach (KeyValuePair<string, List<GraphItem>> drop in Drops)
+        foreach (KeyValuePair<Tuple<string, DropType>, List<GraphItem>> drop in Drops)
         {
-            graphBuilder.AddNode(drop.Key);
+            graphBuilder.AddNode(drop.Key.Item1, drop.Key.Item2.ToString());
             foreach (GraphItem item in drop.Value)
             {
-                graphBuilder.AddNode(item.ItemName);
-                graphBuilder.AddEdge(drop.Key, item.ItemName);
+                graphBuilder.AddNode(item);
+                graphBuilder.AddEdge(drop.Key.Item1, item.ItemName);
             }
         }
 
         foreach (KeyValuePair<string, GraphPiece> piece in Pieces)
         {
-            graphBuilder.AddNode(piece.Value.PieceName);
-            graphBuilder.AddNode(piece.Value.RequiredCraftingStation);
+            graphBuilder.AddNode(piece.Value.PieceName, NodeTypes.Piece.ToString());
+            graphBuilder.AddNode(piece.Value.RequiredCraftingStation, NodeTypes.CraftingStation.ToString());
             graphBuilder.AddEdge(piece.Value.RequiredCraftingStation, piece.Value.PieceName);
             foreach (KeyValuePair<GraphItem, int> requirement in piece.Value.BuildRequirements)
             {
-                graphBuilder.AddNode(requirement.Key.ItemName);
+                graphBuilder.AddNode(requirement.Key);
                 graphBuilder.AddEdge(requirement.Key.ItemName, piece.Value.PieceName);
             }
         }
@@ -69,10 +64,10 @@ public abstract class FilteredData
 
         foreach (KeyValuePair<string, GraphCraftingStation> station in CraftingStations)
         {
-            graphBuilder.AddNode(station.Value.Name);
+            graphBuilder.AddNode(station.Value.Name, NodeTypes.CraftingStation.ToString());
             foreach (string extensionName in station.Value.ExtensionNames)
             {
-                graphBuilder.AddNode(extensionName);
+                graphBuilder.AddNode(extensionName, NodeTypes.CraftingStation.ToString());
                 graphBuilder.AddEdge(extensionName, station.Value.Name);
             }
 
@@ -81,7 +76,7 @@ public abstract class FilteredData
 
         foreach (KeyValuePair<string, GraphProcessor> processor in Processors)
         {
-            graphBuilder.AddNode(processor.Value.Name);
+            graphBuilder.AddNode(processor.Value.Name, NodeTypes.Processor.ToString());
             AddRecipesToGraph(graphBuilder, processor.Value.Recipes);
         }
 
@@ -92,12 +87,12 @@ public abstract class FilteredData
     {
         foreach (KeyValuePair<string, GraphRecipe> recipe in recipes)
         {
-            graphBuilder.AddNode(recipe.Value.RecipeName);
-            graphBuilder.AddNode(recipe.Value.CraftedItem.Item1.ItemName);
+            graphBuilder.AddNode(recipe.Value.RecipeName, NodeTypes.Recipe.ToString());
+            graphBuilder.AddNode(recipe.Value.CraftedItem.Item1);
             graphBuilder.AddEdge(recipe.Value.RecipeName, recipe.Value.CraftedItem.Item1.ItemName);
             foreach (KeyValuePair<GraphItem, int> item in recipe.Value.RequiredItems)
             {
-                graphBuilder.AddNode(item.Key.ItemName);
+                graphBuilder.AddNode(item.Key);
                 graphBuilder.AddEdge(item.Key.ItemName, recipe.Value.RecipeName);
             }
         }

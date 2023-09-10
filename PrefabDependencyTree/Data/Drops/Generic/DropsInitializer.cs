@@ -27,7 +27,7 @@ public abstract class DropsInitializer<T, U> : Initializer
                 continue;
             }
 
-            List<GraphItem> newDrops = DataHarvester.Drops.TryGetValue(pair.Key.Item1, out List<GraphItem> drops)
+            List<GraphItem> newDrops = DataHarvester.Drops.TryGetValue(pair.Key, out List<GraphItem> drops)
                 ? drops
                 : new List<GraphItem>();
             foreach (U drop in dropData)
@@ -51,7 +51,7 @@ public abstract class DropsInitializer<T, U> : Initializer
                 }
             }
 
-            DataHarvester.Drops[pair.Key.Item1] = newDrops.Distinct().ToList();
+            DataHarvester.Drops[Tuple.Create(pair.Key.Item1,pair.Key.Item2)] = newDrops.Distinct().ToList();
         }
 
         Logger.LogInfo(
