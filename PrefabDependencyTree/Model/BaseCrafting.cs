@@ -23,8 +23,7 @@ public class BaseCrafting
 
     public bool ContainsItemTypes(List<string> itemTypes)
     {
-        return Recipes
-            .Any(recipe =>
+        return Recipes.Any(recipe =>
                 itemTypes.Contains(recipe.Value.CraftedItem.Item1.ItemType)
                 || recipe.Value.RequiredItems.Any(requiredItem =>
                     itemTypes.Contains(requiredItem.Key.ItemType)));

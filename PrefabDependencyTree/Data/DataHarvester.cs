@@ -20,14 +20,14 @@ public static class DataHarvester
 
     public static void Initialize()
     {
-        InitializeDrops();
-        InitializePieces();
         InitializeSmelters();
         InitializeIncinerator();
         InitializeCookingStations();
         InitializeFermenters();
         InitializeCraftingStations();
+        InitializePieces();
         InitializeRecipes();
+        InitializeDrops();
         // show results
         LogOverview();
         LogItemTypesOverview();
@@ -86,7 +86,11 @@ public static class DataHarvester
             kv => kv.Key,
             kv => GraphPiece.FromPiece((Piece)kv.Value)
         );
-        pieces.ToList().ForEach(piece => Pieces.Add(piece.Key, piece.Value));
+        pieces
+            .Where(kv => 
+                !CraftingStations.ContainsKey(kv.Key) && !Processors.ContainsKey(kv.Key))
+            .ToList()
+            .ForEach(piece => Pieces.Add(piece.Key, piece.Value));
         Logger.LogInfo($"loaded {pieces.Count} pieces from game");
     }
 

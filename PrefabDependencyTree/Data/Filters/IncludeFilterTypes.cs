@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace PrefabDependencyTree.Data;
+namespace PrefabDependencyTree.Data.Filters;
 
 public class IncludeFilterTypes: FilteredData
 {

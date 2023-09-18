@@ -1,6 +1,6 @@
 ﻿namespace PrefabDependencyTree.Data;
 
-public enum NodeTypes
+public enum NodeType
 {
     Piece,
     CraftingStation,
@@ -22,5 +22,6 @@ public enum DropType
 public enum FilterType
 {
     Include,
-    Exclude
+    Exclude,
+    Unfiltered
 }

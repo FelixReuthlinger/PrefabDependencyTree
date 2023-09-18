@@ -109,10 +109,11 @@
     <Compile Include="Data\Drops\PickableItemRandomDropInitializer.cs" />
     <Compile Include="Data\Drops\TreeBaseDropsInitializer.cs" />
     <Compile Include="Data\Drops\TreeLogDropsInitializer.cs" />
-    <Compile Include="Data\ExcludeFilterTypes.cs" />
-    <Compile Include="Data\FilteredData.cs" />
+    <Compile Include="Data\Filters\ExcludeFilterTypes.cs" />
+    <Compile Include="Data\Filters\FilteredData.cs" />
+    <Compile Include="Data\Filters\IncludeFilterTypes.cs" />
+    <Compile Include="Data\Filters\UnfilteredData.cs" />
     <Compile Include="Data\GraphBuilder.cs" />
-    <Compile Include="Data\IncludeFilterTypes.cs" />
     <Compile Include="Data\TypeEnums.cs" />
     <Compile Include="Model\BaseCrafting.cs" />
     <Compile Include="Model\GraphCraftingStation.cs" />

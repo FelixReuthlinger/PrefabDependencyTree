@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using BepInEx;
 using DotNetGraph.Compilation;
 using Jotunn.Entities;
 using PrefabDependencyTree.Data;
+using PrefabDependencyTree.Data.Filters;
 
 namespace PrefabDependencyTree.Util;
 
@@ -61,7 +63,7 @@ public class ConsoleController : ConsoleCommand
             switch (args[0])
             {
                 case printOption:
-                    WriteGraphOutput(filteredData: new IncludeFilterTypes(itemTypeFilters: ItemTypeEnums));
+                    WriteGraphOutput(filteredData: new UnfilteredData());
                     break;
                 case printIncludeFilteredOption:
                     if (args.Length > 1)
@@ -121,6 +123,32 @@ public class ConsoleController : ConsoleCommand
         string outputFilePath = Path.Combine(Paths.ConfigPath, $"{PrefabDependencyTreePlugin.PluginGUID}.graph.dot");
         File.WriteAllText(outputFilePath, writer.GetStringBuilder().ToString());
         Logger.LogInfo($"wrote graph file '{outputFilePath}'");
+        RunGraphVizConverter(outputFilePath);
+    }
+
+    private static void RunGraphVizConverter(string filePath)
+    {
+        string graphVizConverterBinary = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            @"Graphviz\bin\gv2gml.exe");
+        if (File.Exists(graphVizConverterBinary))
+        {
+            Logger.LogInfo($"GraphViz installation binary detected at '{graphVizConverterBinary}'");
+            try
+            {
+                string convertedFile = filePath.Replace(".dot", ".gml");
+                Process converter = Process.Start(fileName: graphVizConverterBinary,
+                    arguments: $"\"{filePath}\" -o \"{convertedFile}\"");
+                converter?.WaitForExit(100000);
+                if (File.Exists(convertedFile))
+                    Logger.LogInfo($"converted to GraphViz file to '{convertedFile}'");
+                else
+                    Logger.LogWarning($"converted file was not found as expected");
+            }
+            catch (Exception e)
+            {
+                Logger.LogWarning($"error converting .dot file using GraphViz: {e.Message}");
+            }
+        }
     }
 
     private static void LogUsage()

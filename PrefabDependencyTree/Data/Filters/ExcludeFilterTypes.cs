@@ -2,7 +2,7 @@
 using System.Linq;
 using PrefabDependencyTree.Model;
 
-namespace PrefabDependencyTree.Data;
+namespace PrefabDependencyTree.Data.Filters;
 
 public class ExcludeFilterTypes : FilteredData
 {

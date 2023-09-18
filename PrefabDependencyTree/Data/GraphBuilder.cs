@@ -38,8 +38,12 @@ public class GraphBuilder
                 SetNodeColorItemType(newNode, itemType);
             else if (Enum.TryParse(nodeType, out DropType dropType))
                 SetNodeColorDropType(newNode, dropType);
+            else if (Enum.TryParse(nodeType, out NodeType nodeTypeInternal))
+                SetNodePieceTypeOption(newNode, nodeTypeInternal);
+            else
+                throw new ArgumentException($"node type '{nodeType}' does not match any types known");
         }
-
+        
         Nodes.Add(name, newNode);
     }
 
@@ -125,6 +129,31 @@ public class GraphBuilder
                 break;
             default:
                 throw new ArgumentException($"type '{itemType.ToString()}' not supported");
+        }
+    }
+
+    private static void SetNodePieceTypeOption(DotNode node, NodeType nodeType)
+    {
+        switch (nodeType)
+        {
+            case NodeType.Piece:
+                node.WithShape(DotNodeShape.Assembly);
+                node.WithColor(DotColor.Brown);
+                break;
+            case NodeType.Processor:
+                node.WithShape(DotNodeShape.Circle);
+                node.WithColor(DotColor.Gold);
+                break;
+            case NodeType.CraftingStation:
+                node.WithShape(DotNodeShape.Circle);
+                node.WithColor(DotColor.Gold);
+                break;
+            case NodeType.Recipe:
+                node.WithShape(DotNodeShape.Note);
+                node.WithColor(DotColor.Cornsilk);
+                break;
+            default: 
+                throw new ArgumentException($"type '{nodeType.ToString()}' not supported");
         }
     }
 

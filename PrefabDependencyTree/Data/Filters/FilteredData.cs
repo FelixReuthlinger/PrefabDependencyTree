@@ -5,7 +5,7 @@ using DotNetGraph.Core;
 using PrefabDependencyTree.Model;
 using PrefabDependencyTree.Util;
 
-namespace PrefabDependencyTree.Data;
+namespace PrefabDependencyTree.Data.Filters;
 
 public abstract class FilteredData
 {
@@ -48,26 +48,14 @@ public abstract class FilteredData
             }
         }
 
-        foreach (KeyValuePair<string, GraphPiece> piece in Pieces)
-        {
-            graphBuilder.AddNode(piece.Value.PieceName, NodeTypes.Piece.ToString());
-            graphBuilder.AddNode(piece.Value.RequiredCraftingStation, NodeTypes.CraftingStation.ToString());
-            graphBuilder.AddEdge(piece.Value.RequiredCraftingStation, piece.Value.PieceName);
-            foreach (KeyValuePair<GraphItem, int> requirement in piece.Value.BuildRequirements)
-            {
-                graphBuilder.AddNode(requirement.Key);
-                graphBuilder.AddEdge(requirement.Key.ItemName, piece.Value.PieceName);
-            }
-        }
-
         AddRecipesToGraph(graphBuilder, UnboundRecipes);
 
         foreach (KeyValuePair<string, GraphCraftingStation> station in CraftingStations)
         {
-            graphBuilder.AddNode(station.Value.Name, NodeTypes.CraftingStation.ToString());
+            graphBuilder.AddNode(station.Value.Name, NodeType.CraftingStation.ToString());
             foreach (string extensionName in station.Value.ExtensionNames)
             {
-                graphBuilder.AddNode(extensionName, NodeTypes.CraftingStation.ToString());
+                graphBuilder.AddNode(extensionName, NodeType.CraftingStation.ToString());
                 graphBuilder.AddEdge(extensionName, station.Value.Name);
             }
 
@@ -76,8 +64,20 @@ public abstract class FilteredData
 
         foreach (KeyValuePair<string, GraphProcessor> processor in Processors)
         {
-            graphBuilder.AddNode(processor.Value.Name, NodeTypes.Processor.ToString());
+            graphBuilder.AddNode(processor.Value.Name, NodeType.Processor.ToString());
             AddRecipesToGraph(graphBuilder, processor.Value.Recipes);
+        }
+        
+        foreach (KeyValuePair<string, GraphPiece> piece in Pieces)
+        {
+            graphBuilder.AddNode(piece.Value.PieceName, NodeType.Piece.ToString());
+            graphBuilder.AddNode(piece.Value.RequiredCraftingStation, NodeType.CraftingStation.ToString());
+            graphBuilder.AddEdge(piece.Value.RequiredCraftingStation, piece.Value.PieceName);
+            foreach (KeyValuePair<GraphItem, int> requirement in piece.Value.BuildRequirements)
+            {
+                graphBuilder.AddNode(requirement.Key);
+                graphBuilder.AddEdge(requirement.Key.ItemName, piece.Value.PieceName);
+            }
         }
 
         return graphBuilder.BuildGraph();
@@ -87,7 +87,7 @@ public abstract class FilteredData
     {
         foreach (KeyValuePair<string, GraphRecipe> recipe in recipes)
         {
-            graphBuilder.AddNode(recipe.Value.RecipeName, NodeTypes.Recipe.ToString());
+            graphBuilder.AddNode(recipe.Value.RecipeName, NodeType.Recipe.ToString());
             graphBuilder.AddNode(recipe.Value.CraftedItem.Item1);
             graphBuilder.AddEdge(recipe.Value.RecipeName, recipe.Value.CraftedItem.Item1.ItemName);
             foreach (KeyValuePair<GraphItem, int> item in recipe.Value.RequiredItems)
