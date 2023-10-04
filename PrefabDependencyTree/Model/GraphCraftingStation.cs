@@ -18,7 +18,10 @@ public class GraphCraftingStation : BaseCrafting
         List<CraftingStation> stations)
     {
         Dictionary<string, GraphCraftingStation> stationsFromExtensions = extensions
-            .Select(extension => Tuple.Create(extension.m_craftingStation.name, extension.name))
+            .Select(extension =>
+                Tuple.Create(
+                    extension.m_craftingStation != null ? extension.m_craftingStation.name : "missing station",
+                    extension.name))
             .GroupBy(tuple => tuple.Item1)
             .ToDictionary(
                 group => group.Key,

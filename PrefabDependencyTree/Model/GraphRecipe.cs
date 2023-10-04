@@ -38,20 +38,22 @@ public class GraphRecipe
             : smelter.m_fuelItem.name;
 
         return smelter.m_conversion.Select(conversion =>
-            new GraphRecipe
-            {
-                RecipeName = GetProcessorRecipeName(conversion.m_from.name, conversion.m_to.name),
-                CraftedItem = Tuple.Create(GraphItem.GetOrCreate(conversion.m_to), 1),
-                RequiredItems = new Dictionary<GraphItem, int>
+                new GraphRecipe
                 {
+                    RecipeName = GetProcessorRecipeName(conversion.m_from.name, conversion.m_to.name),
+                    CraftedItem = Tuple.Create(GraphItem.GetOrCreate(conversion.m_to), 1),
+                    RequiredItems = new Dictionary<GraphItem, int>
                     {
-                        GraphItem.GetOrCreate(fuel, ItemDrop.ItemData.ItemType.Material.ToString()),
-                        smelter.m_fuelPerProduct
-                    },
-                    { GraphItem.GetOrCreate(conversion.m_from), 1 }
+                        {
+                            GraphItem.GetOrCreate(fuel, ItemDrop.ItemData.ItemType.Material.ToString()),
+                            smelter.m_fuelPerProduct
+                        },
+                        { GraphItem.GetOrCreate(conversion.m_from), 1 }
+                    }
                 }
-            }
-        ).ToDictionary(recipe => recipe.RecipeName, recipe => recipe);
+            )
+            .GroupBy(recipe => recipe.RecipeName)
+            .ToDictionary(group => group.Key, group => group.First());
     }
 
     public static Dictionary<string, GraphRecipe> FromIncinerator(Incinerator incinerator)
@@ -90,13 +92,15 @@ public class GraphRecipe
     public static Dictionary<string, GraphRecipe> FromFermenter(Fermenter fermenter)
     {
         return fermenter.m_conversion.Select(
-            conversion => new GraphRecipe
-            {
-                RecipeName = GetProcessorRecipeName(conversion.m_from.name, conversion.m_to.name),
-                CraftedItem = Tuple.Create(GraphItem.GetOrCreate(conversion.m_to), conversion.m_producedItems),
-                RequiredItems = new Dictionary<GraphItem, int> { { GraphItem.GetOrCreate(conversion.m_from), 1 } }
-            }
-        ).ToDictionary(recipe => recipe.RecipeName, recipe => recipe);
+                conversion => new GraphRecipe
+                {
+                    RecipeName = GetProcessorRecipeName(conversion.m_from.name, conversion.m_to.name),
+                    CraftedItem = Tuple.Create(GraphItem.GetOrCreate(conversion.m_to), conversion.m_producedItems),
+                    RequiredItems = new Dictionary<GraphItem, int> { { GraphItem.GetOrCreate(conversion.m_from), 1 } }
+                }
+            )
+            .GroupBy(recipe => recipe.RecipeName)
+            .ToDictionary(group => group.Key, group => group.First());
     }
 
     public static Dictionary<string, GraphRecipe> FromCookingStation(CookingStation cookingStation)
@@ -113,7 +117,9 @@ public class GraphRecipe
                     { GraphItem.GetOrCreate(fuel, ItemDrop.ItemData.ItemType.Material.ToString()), 1 }
                 }
             }
-        ).ToDictionary(recipe => recipe.RecipeName, recipe => recipe);
+        )
+            .GroupBy(recipe => recipe.RecipeName)
+            .ToDictionary(group => group.Key, group => group.First());
     }
 
     private static string GetProcessorRecipeName(string fromItem, string toItem)

@@ -1,3 +1,6 @@
+* 1.2.4 -> 
+  * fixed handling of duplicated recipes
+  * fixed handling of extensions that would come without a crafting station that they would extend
 * 1.2.1 & 2 & 3 -> updated dependencies, now with Jotunn fix this mod should also work as expected
 * 1.2.0 ->
   * some fixes for filtering (added unfiltered option for just printing all)
