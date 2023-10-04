@@ -13,7 +13,7 @@ namespace PrefabDependencyTree
         public const string PluginAuthor = "FixItFelix";
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginName = "PrefabDependencyTree";
-        public const string PluginVersion = "1.2.2";
+        public const string PluginVersion = "1.2.3";
 
         private void Awake()
         {
