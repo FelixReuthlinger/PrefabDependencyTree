@@ -1,3 +1,4 @@
+* 1.2.5 -> updated dependencies and compiled for 0.217.24
 * 1.2.4 -> 
   * fixed handling of duplicated recipes
   * fixed handling of extensions that would come without a crafting station that they would extend
