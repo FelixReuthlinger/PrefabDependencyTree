@@ -1,3 +1,4 @@
+* 1.2.6 -> updated dependencies and compiled for 0.217.30
 * 1.2.5 -> updated dependencies and compiled for 0.217.24
 * 1.2.4 -> 
   * fixed handling of duplicated recipes
