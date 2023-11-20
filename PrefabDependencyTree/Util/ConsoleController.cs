@@ -18,6 +18,7 @@ public class ConsoleController : ConsoleCommand
     private const string printIncludeFilteredOption = "print_include_filtered_tree";
     private const string printExcludeFilteredOption = "print_exclude_filtered_tree";
     private const string debugLogAll = "debug_log_all";
+    private const string debugLogItemsCategories = "debug_log_items_categories";
 
     private static readonly List<string> ItemTypeEnums = Enum.GetNames(typeof(ItemDrop.ItemData.ItemType)).ToList();
 
@@ -93,6 +94,13 @@ public class ConsoleController : ConsoleCommand
                     }
 
                     break;
+                case debugLogItemsCategories:
+                    List<string> yamlLines = DataHarvester.LogAllItemsToCategorizedYaml();
+                    string yamlFilePath = Path.Combine(Paths.ConfigPath,
+                        $"{PrefabDependencyTreePlugin.PluginGUID}.all.items.categories.yaml");
+                    File.WriteAllText(path: yamlFilePath, contents: string.Join("\n", yamlLines));
+                    Logger.LogInfo($"wrote file '{yamlFilePath}'");
+                    break;
                 case debugLogAll:
                     List<string> resultString = DataHarvester.LogAllToString();
                     resultString.ForEach(Logger.LogWarning);
@@ -157,6 +165,7 @@ public class ConsoleController : ConsoleCommand
         Logger.LogInfo("command option:");
         Logger.LogInfo($"   {printOption} -> will print the whole tree analyzed from game data");
         Logger.LogInfo($"   {debugLogAll} -> will log warn all prefabs (this will be huge log output!)");
+        Logger.LogInfo($"   {debugLogItemsCategories} -> writes all item prefabs by category into a yaml format file");
         Logger.LogInfo($"   {printIncludeFilteredOption} Material,Consumable -> " +
                        $"print tree with items of the provided item types included " +
                        $"(complete tree with link to any included items)");
@@ -170,5 +179,5 @@ public class ConsoleController : ConsoleCommand
     public override string Help => "Prefab Dependency Tree Console Commands";
 
     public override List<string> CommandOptionList() =>
-        new() { printOption, printIncludeFilteredOption, printExcludeFilteredOption, debugLogAll };
+        new() { printOption, printIncludeFilteredOption, printExcludeFilteredOption, debugLogAll, debugLogItemsCategories };
 }

@@ -80,6 +80,37 @@ public static class DataHarvester
         return output;
     }
 
+    public static List<string> LogAllItemsToCategorizedYaml()
+    {
+        List<GraphRecipe> recipes = CraftingStations
+            .SelectMany(cs => cs.Value.Recipes
+                .Select(recipe => recipe.Value)
+                .ToList()
+            ).Union(UnboundRecipes.Select(unbound => unbound.Value))
+            .Union(Processors.SelectMany(processor =>
+                processor.Value.Recipes.Select(recipe => recipe.Value).ToList()))
+            .ToList();
+        List<GraphItem> itemsFromRecipes = recipes.SelectMany(recipe =>
+        {
+            var itemsResults = new List<GraphItem> { recipe.CraftedItem.Item1 };
+            itemsResults.AddRange(recipe.RequiredItems.Select(req => req.Key));
+            return itemsResults;
+        }).ToList();
+        var allItems = Items.Select(item => item.Value).Union(itemsFromRecipes)
+            .Union(Drops.SelectMany(drop => drop.Value)).ToList();
+        Dictionary<string, List<string>> items = allItems.GroupBy(item => item.ItemType)
+            .ToDictionary(group => group.Key, 
+                group => group.Select(item => item.ItemName).Distinct().OrderBy(item => item).ToList());
+        List<string> output = new List<string>();
+        foreach (var group in items)
+        {
+            output.Add($"{group.Key}:");
+            output.AddRange(group.Value.Select(item => $"  - {item}"));
+        }
+
+        return output;
+    }
+
     private static void InitializePieces()
     {
         Dictionary<string, GraphPiece> pieces = PrefabManager.Cache.GetPrefabs(typeof(Piece)).ToDictionary(
@@ -87,7 +118,7 @@ public static class DataHarvester
             kv => GraphPiece.FromPiece((Piece)kv.Value)
         );
         pieces
-            .Where(kv => 
+            .Where(kv =>
                 !CraftingStations.ContainsKey(kv.Key) && !Processors.ContainsKey(kv.Key))
             .ToList()
             .ForEach(piece => Pieces.Add(piece.Key, piece.Value));
